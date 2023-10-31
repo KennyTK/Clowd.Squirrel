@@ -60,6 +60,7 @@ namespace Squirrel.Update
 
         static int executeCommandLine(string[] args)
         {
+            Log.Info("calling executeCommandLine method");
             Log.Info("Starting Squirrel Updater: " + String.Join(" ", args));
             Log.Info("Updater location is: " + SquirrelRuntimeInfo.EntryExePath);
 
@@ -79,6 +80,7 @@ namespace Squirrel.Update
 
             switch (opt.updateAction) {
             case UpdateAction.Setup:
+                Log.Info("Case: UpdateAction Setup");
                 try {
                     Setup(opt.target, opt.setupOffset, opt.silentInstall, opt.checkInstall).Wait();
                 } catch (Exception ex) when (!opt.silentInstall && !opt.checkInstall) {
@@ -97,31 +99,40 @@ namespace Squirrel.Update
 
                 break;
             case UpdateAction.Install:
+                Log.Info("Case: UpdateAction Install");
                 var progressSource = new ProgressSource();
                 Install(opt.silentInstall, progressSource, Path.GetFullPath(opt.target)).Wait();
                 break;
             case UpdateAction.Uninstall:
+                Log.Info("Case: UpdateAction uninstall");
                 Uninstall().Wait();
                 break;
             case UpdateAction.Download:
+                Log.Info("Case: UpdateAction Download");
                 Console.WriteLine(Download(opt.target).Result);
                 break;
             case UpdateAction.Update:
+                Log.Info("Case: UpdateAction Update");
                 Update(opt.target).Wait();
                 break;
             case UpdateAction.CheckForUpdate:
+                Log.Info("Case: UpdateAction CheckForUpdate");
                 Console.WriteLine(CheckForUpdate(opt.target).Result);
                 break;
             case UpdateAction.UpdateSelf:
+                Log.Info("Case: UpdateAction UpdateSelf");
                 UpdateSelf().Wait();
                 break;
             case UpdateAction.Shortcut:
+                Log.Info("Case: UpdateAction Shortcut");
                 Shortcut(opt.target, opt.shortcutArgs, opt.processStartArgs, opt.icon, opt.onlyUpdateShortcuts);
                 break;
             case UpdateAction.Deshortcut:
+                Log.Info("Case: UpdateAction Deshortcut");
                 Deshortcut(opt.target, opt.shortcutArgs);
                 break;
             case UpdateAction.ProcessStart:
+                Log.Info("Case: UpdateAction ProcessStart");
                 ProcessStart(opt.processStart, opt.processStartArgs, opt.shouldWait, opt.forceLatest);
                 break;
             }
@@ -132,6 +143,7 @@ namespace Squirrel.Update
 
         static async Task Setup(string setupPath, long setupBundleOffset, bool silentInstall, bool checkInstall)
         {
+            Log.Info("calling Setup method");
             Log.Info($"Extracting bundled app data from '{setupPath}'.");
 
             using var fsFull = File.OpenRead(setupPath);
@@ -207,6 +219,8 @@ namespace Squirrel.Update
             var entry = ReleaseEntry.GenerateFromFile(packagePath);
             ReleaseEntry.WriteReleaseFile(new[] { entry }, Path.Combine(tempFolder, "RELEASES"));
 
+            //TODO check is the releases was actually created. Windows Defender can be challening
+
             var progressSource = new ProgressSource();
             progressSource.Progress += (e, p) => {
                 // post install hooks are about to be run (app will start)
@@ -220,6 +234,7 @@ namespace Squirrel.Update
 
         static async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null)
         {
+            Log.Info("calling Install method");
             sourceDirectory = sourceDirectory ?? SquirrelRuntimeInfo.BaseDirectory;
             var releasesPath = Path.Combine(sourceDirectory, "RELEASES");
             var sourceDi = new DirectoryInfo(sourceDirectory);
@@ -277,6 +292,7 @@ namespace Squirrel.Update
 
         static async Task Update(string updateUrl)
         {
+            Log.Info("calling Update method");
             Log.Info("Starting update, downloading from " + updateUrl);
 
             using var mgr = new UpdateManager(updateUrl);
@@ -312,6 +328,7 @@ namespace Squirrel.Update
 
         static async Task UpdateSelf()
         {
+            Log.Info("calling UpdateSelf method");
             PlatformUtil.WaitForParentProcessToExit();
             var src = SquirrelRuntimeInfo.EntryExePath;
             var updateDotExeForOurPackage = Path.Combine(
@@ -325,6 +342,7 @@ namespace Squirrel.Update
 
         static async Task<string> Download(string updateUrl)
         {
+            Log.Info("calling Download method");
             Log.Info("Fetching update information, downloading from " + updateUrl);
             using var mgr = new UpdateManager(updateUrl);
             var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, progress: x => Console.WriteLine(x / 3));
@@ -410,6 +428,7 @@ namespace Squirrel.Update
 
         static void ProcessStart(string exeName, string arguments, bool shouldWait, bool forceLatest)
         {
+            Log.Info("calling ProcessStart method");
             if (String.IsNullOrWhiteSpace(exeName)) {
                 ShowHelp();
                 return;

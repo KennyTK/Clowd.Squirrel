@@ -309,6 +309,9 @@ namespace Squirrel
         /// <summary>
         /// Generates a <see cref="ReleaseEntry"/> from a local update package file (such as a nupkg).
         /// </summary>
+        /// <param name="file">
+        /// Stream to generate from
+        /// </param>
         public static ReleaseEntry GenerateFromFile(Stream file, string filename, string baseUrl = null)
         {
             Contract.Requires(file != null && file.CanRead);
@@ -321,6 +324,9 @@ namespace Squirrel
         /// <summary>
         /// Generates a <see cref="ReleaseEntry"/> from a local update package file (such as a nupkg).
         /// </summary>
+        /// <param name="path">
+        /// Path to generate from
+        /// </param>
         public static ReleaseEntry GenerateFromFile(string path, string baseUrl = null)
         {
             using (var inf = File.OpenRead(path)) {

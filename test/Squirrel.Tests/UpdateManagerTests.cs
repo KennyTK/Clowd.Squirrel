@@ -79,6 +79,10 @@ namespace Squirrel.Tests
                     entries.Count().ShouldEqual(3);
                 }
 
+                /// <summary>
+                /// Verify that install utilizing ___ and ___ will be successful for first time install.
+                /// </summary>
+                /// <returns></returns>
                 [Fact]
                 public async Task InitialInstallSmokeTest()
                 {
@@ -95,6 +99,7 @@ namespace Squirrel.Tests
                     await fixture.FullInstall();
 
                     var releasePath = Path.Combine(localAppDir, "packages", "RELEASES");
+
                     File.Exists(releasePath).ShouldBeTrue();
 
                     var entries = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasePath, Encoding.UTF8));

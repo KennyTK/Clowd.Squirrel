@@ -39,7 +39,7 @@ namespace Squirrel
         /// <summary>
         /// Create a new instance of <see cref="UpdateInfo"/>
         /// </summary>
-        protected UpdateInfo(ReleaseEntry currentlyInstalledVersion, IEnumerable<ReleaseEntry> releasesToApply, string packageDirectory)
+        protected UpdateInfo(ReleaseEntry currentlyInstalledVersion, IEnumerable<ReleaseEntry> releasesToApply, string localPackageDirectory)
         {
             // NB: When bootstrapping, CurrentlyInstalledVersion is null!
             LatestLocalReleaseEntry = currentlyInstalledVersion;
@@ -48,7 +48,7 @@ namespace Squirrel
                 ReleasesToApply.MaxBy(x => x.Version).FirstOrDefault() :
                 LatestLocalReleaseEntry;
 
-            this.PackageDirectory = packageDirectory;
+            this.PackageDirectory = localPackageDirectory;
         }
 
         /// <summary>
@@ -74,10 +74,10 @@ namespace Squirrel
         /// yet to be installed.
         /// </summary>
         /// <exception cref="Exception">When availableReleases is null or empty</exception>
-        public static UpdateInfo Create(ReleaseEntry currentVersion, IEnumerable<ReleaseEntry> availableReleases, string packageDirectory)
+        public static UpdateInfo Create(ReleaseEntry currentVersion, IEnumerable<ReleaseEntry> availableReleases, string localPackageDirectory)
         {
             Contract.Requires(availableReleases != null);
-            Contract.Requires(!String.IsNullOrEmpty(packageDirectory));
+            Contract.Requires(!String.IsNullOrEmpty(localPackageDirectory));
 
             var latestFull = availableReleases.MaxBy(x => x.Version).FirstOrDefault(x => !x.IsDelta);
             if (latestFull == null) {
@@ -85,13 +85,14 @@ namespace Squirrel
             }
 
             if (currentVersion == null) {
-                return new UpdateInfo(null, new[] { latestFull }, packageDirectory);
+                return new UpdateInfo(null, new[] { latestFull }, localPackageDirectory);
             }
 
             if (currentVersion.Version >= latestFull.Version) {
-                return new UpdateInfo(currentVersion, Enumerable.Empty<ReleaseEntry>(), packageDirectory);
+                return new UpdateInfo(currentVersion, Enumerable.Empty<ReleaseEntry>(), localPackageDirectory);
             }
 
+            // KTK TODO: move to new function near Utility.FindLatestFullVersion.
             var newerThanUs = availableReleases
                 .Where(x => x.Version > currentVersion.Version)
                 .OrderBy(v => v.Version)
@@ -105,8 +106,8 @@ namespace Squirrel
             // this tries to find a good balance of both. we will go for the full if
             // there are too many delta's or if their file size is too large.
             return (deltasSize > 0 && (deltasSize * 10) < latestFull.Filesize && deltasCount <= 10) ?
-                new UpdateInfo(currentVersion, newerThanUs.Where(x => x.IsDelta).ToArray(), packageDirectory) :
-                new UpdateInfo(currentVersion, new[] { latestFull }, packageDirectory);
+                new UpdateInfo(currentVersion, newerThanUs.Where(x => x.IsDelta).ToArray(), localPackageDirectory) :
+                new UpdateInfo(currentVersion, new[] { latestFull }, localPackageDirectory);
         }
     }
 }

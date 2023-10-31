@@ -46,6 +46,9 @@ namespace Squirrel.Tests.Legacy
         }
 
         [IgnoreDataMember]
+        internal readonly static IFullLogger Log = SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(ReleaseEntry));
+
+        [IgnoreDataMember]
         public string EntryAsString {
             get {
                 if (StagingPercentage != null) {
@@ -103,6 +106,8 @@ namespace Squirrel.Tests.Legacy
         static readonly Regex stagingRegex = new Regex(@"#\s+(\d{1,3})%$");
         public static ReleaseEntry ParseReleaseEntry(string entry)
         {
+            Log.Info("calling ParseReleaseEntry method");
+            
             Contract.Requires(entry != null);
 
             float? stagingPercentage = null;
@@ -162,6 +167,8 @@ namespace Squirrel.Tests.Legacy
 
         public bool IsStagingMatch(Guid? userId)
         {
+            Log.Info("calling IsStagingMatch method");
+
             // A "Staging match" is when a user falls into the affirmative
             // bucket - i.e. if the staging is at 10%, this user is the one out
             // of ten case.
@@ -176,6 +183,8 @@ namespace Squirrel.Tests.Legacy
 
         public static IEnumerable<ReleaseEntry> ParseReleaseFile(string fileContents)
         {
+            Log.Info("calling ParseReleaseFile method");
+
             if (String.IsNullOrEmpty(fileContents)) {
                 return new ReleaseEntry[0];
             }
@@ -193,6 +202,8 @@ namespace Squirrel.Tests.Legacy
 
         public static IEnumerable<ReleaseEntry> ParseReleaseFileAndApplyStaging(string fileContents, Guid? userToken)
         {
+            Log.Info("calling ParseReleaseFileAndApplyStaging method");
+
             if (String.IsNullOrEmpty(fileContents)) {
                 return new ReleaseEntry[0];
             }
@@ -211,6 +222,8 @@ namespace Squirrel.Tests.Legacy
 
         public static void WriteReleaseFile(IEnumerable<ReleaseEntry> releaseEntries, Stream stream)
         {
+            Log.Info("calling WriteReleaseFile method");
+
             Contract.Requires(releaseEntries != null && releaseEntries.Any());
             Contract.Requires(stream != null);
 
@@ -234,6 +247,8 @@ namespace Squirrel.Tests.Legacy
 
         public static ReleaseEntry GenerateFromFile(Stream file, string filename, string baseUrl = null)
         {
+            Log.Info("calling GenerateFromFile method");
+
             Contract.Requires(file != null && file.CanRead);
             Contract.Requires(!String.IsNullOrEmpty(filename));
 
