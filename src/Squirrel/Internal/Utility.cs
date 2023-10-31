@@ -448,29 +448,82 @@ namespace Squirrel
         {
             var file = File.OpenRead(localReleaseFile);
 
+            if (file != null)
+                Console.WriteLine("file was not null: " + file.ToString());
+
             // NB: sr disposes file
             using (var sr = new StreamReader(file, Encoding.UTF8)) {
-                return ReleaseEntry.ParseReleaseFile(sr.ReadToEnd());
+                IEnumerable<ReleaseEntry> files = ReleaseEntry.ParseReleaseFile(sr.ReadToEnd());
+
+                foreach (ReleaseEntry release in files) {
+                    Console.WriteLine("file: " + file.Name);
+                }
+
+                return files;
             }
         }
 
-        public static ReleaseEntry FindLatestFullVersion(IEnumerable<ReleaseEntry> localReleases, RID compatibleRid)
+        /// <summary>
+        /// Find latest release in 'releases' that is a full version and compatible with runtime
+        /// </summary>
+        public static ReleaseEntry FindLatestFullVersion(IEnumerable<ReleaseEntry> releases, RID compatibleRid)
         {
-            return FindCompatibleVersions(localReleases, compatibleRid).FirstOrDefault(f => !f.IsDelta);
+            Log().Info("Method FindLatestFullVersion called");
+            //if (releases == null) {
+            //    Log().Warn("IEnumerable releases was null. FindLatestFullVersion will return null");
+            //    return null;
+            //}
+
+            // test fails because "source" which is "releases" is null
+            //IEnumerable<ReleaseEntry> returned = FindCompatibleVersions(releases, compatibleRid);
+
+            //if(returned == null) {
+            //    Log().Warn("IEnumerable releases was null. FindLatestFullVersion will return null");
+            //    return null;
+            //}
+
+            var returned = FindCompatibleVersions(releases, compatibleRid);
+
+            if (returned == null) 
+            {
+                Log().Warn("FindCompatibleVersions is null");
+                return null;
+            }
+            else {
+                Log().Warn("Finding First Or Default");
+                return returned.FirstOrDefault(f => !f.IsDelta);
+            }
+            //return returned.FirstOrDefault(f => !f.IsDelta); //this is where the null pointer is actually happening
         }
 
-        public static IEnumerable<ReleaseEntry> FindCompatibleVersions(IEnumerable<ReleaseEntry> localReleases, RID compatibleRid)
+
+        /// <summary>
+        /// Choose all releases in 'releases' that are compatible with 'compatibleRid'
+        /// </summary>
+        /// <param name="releases"></param>
+        /// <param name="compatibleRid">
+        /// If null, return all releases in releases by version order
+        /// </param>
+        /// <returns>
+        /// Enumerable of compatible release entries in descending order by version
+        /// </returns>
+        public static IEnumerable<ReleaseEntry> FindCompatibleVersions(IEnumerable<ReleaseEntry> releases, RID compatibleRid)
         {
-            if (!localReleases.Any()) {
+            //if (releases == null) { //TODO or here??? check this first
+            //    return null;
+            //https://stackoverflow.com/questions/16281133/value-cannot-be-null-parameter-name-source
+            //}
+
+            if (!releases.Any()) {
                 return null;
             }
 
-            if (compatibleRid == null || !compatibleRid.IsValid) {
-                return localReleases.OrderByDescending(x => x.Version);
+            if (compatibleRid == null || !compatibleRid.IsValid) { //TODO here!?? check this 2nd
+                return releases.OrderByDescending(x => x.Version);
             }
 
-            return localReleases
-                .Where(r => r.Rid.BaseRID == compatibleRid.BaseRID)
+            return releases
+                .Where(r => (r.Rid?.BaseRID ?? RuntimeOs.Unknown) == compatibleRid.BaseRID) //TODO check this third.
                 .Where(r => r.Rid.Architecture == compatibleRid.Architecture)
                 .OrderByDescending(x => x.Version);
         }

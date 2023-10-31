@@ -16,6 +16,8 @@ namespace Squirrel
             Action<int> progress = null,
             UpdaterIntention intention = UpdaterIntention.Update)
         {
+            this.Log().Info("Method CheckForUpdate called");
+
             // lock will be held until this class is disposed
             await acquireUpdateLock().ConfigureAwait(false);
 
@@ -26,20 +28,27 @@ namespace Squirrel
             ReleaseEntry[] localReleases = new ReleaseEntry[0];
             bool shouldInitialize = intention == UpdaterIntention.Install;
 
-            if (intention != UpdaterIntention.Install) {
-                try {
+            //if (intention != UpdaterIntention.Install) 
+            //{
+                try 
+                {
                     if (!File.Exists(_config.ReleasesFilePath)) {
                         this.Log().Error($"File does not exist at '{_config.ReleasesFilePath}'. No local releases.");
                         shouldInitialize = true;
-                    } else {
+                    } 
+                    else 
+                    {
+                        this.Log().Info($"File does exist at '{_config.ReleasesFilePath}'. Yes local releases.");
                         localReleases = Utility.LoadLocalReleases(_config.ReleasesFilePath).ToArray();
                     }
-                } catch (Exception ex) {
+                } 
+                catch (Exception ex) 
+                {
                     // Something has gone pear-shaped, let's start from scratch
                     this.Log().WarnException("Failed to load local releases, starting from scratch", ex);
                     shouldInitialize = true;
                 }
-            }
+            //}
 
             if (shouldInitialize) initializeClientAppDirectory();
 
@@ -51,9 +60,27 @@ namespace Squirrel
 
             progress(33);
 
-            var remoteReleases = await Utility.RetryAsync(() => _source.GetReleaseFeed(stagingId, latestLocalRelease)).ConfigureAwait(false);
+            var remoteReleases = await Utility.RetryAsync(() => _source.GetReleaseFeed(stagingId, latestLocalRelease)).ConfigureAwait(false); //TODO latestLocalRelease only used for WebClient
 
             progress(66);
+
+            this.Log().Info("intention is: " + intention.ToString());
+
+            if(localReleases == null) 
+            {
+                this.Log().Info("localReleases is null");
+            }
+            else {
+                this.Log().Info("localReleases is not null");
+            }
+
+            if (remoteReleases == null) {
+                this.Log().Info("remoteReleases is null");
+            } else {
+                this.Log().Info("remoteReleases is not null");
+            }
+
+            this.Log().Info("ignore delta updates is: " + ignoreDeltaUpdates);
 
             var updateInfo = determineUpdateInfo(intention, localReleases, remoteReleases, ignoreDeltaUpdates);
 
@@ -63,16 +90,47 @@ namespace Squirrel
 
         void initializeClientAppDirectory()
         {
+            this.Log().Info("calling initializeClientAppDirectory method");
             // On bootstrap, we won't have any of our directories, create them
             var pkgDir = _config.PackagesDir;
             if (Directory.Exists(pkgDir)) {
                 Utility.DeleteFileOrDirectoryHard(pkgDir, throwOnFailure: false);
             }
+
+            this.Log().Info("Creating Directory: " + pkgDir);
+
             Directory.CreateDirectory(pkgDir);
         }
 
+        /// <summary>
+        /// Creates UpdateInfo based on local and remote releases
+        /// </summary>
+        /// <param name="intention">
+        /// Install or Update
+        /// </param>
+        /// <param name="localReleases">
+        /// Enumerable of local releases
+        /// </param>
+        /// <param name="remoteReleases">
+        /// Enumerable of remote releases
+        /// </param>
+        /// <param name="ignoreDeltaUpdates">
+        /// True if ignore deltas
+        /// </param>
+        /// <returns>
+        /// Information about the current version and pending updates
+        /// </returns>
+        /// <exception cref="Exception">
+        /// Remote or local releases are null or empty
+        /// </exception>
         UpdateInfo determineUpdateInfo(UpdaterIntention intention, IEnumerable<ReleaseEntry> localReleases, IEnumerable<ReleaseEntry> remoteReleases, bool ignoreDeltaUpdates)
         {
+            this.Log().Info("Method determineUpdateInfo called");
+
+            if (localReleases == null) {
+                this.Log().Info("No local releases");
+            }
+
             var packageDirectory = _config.PackagesDir;
             localReleases = localReleases ?? Enumerable.Empty<ReleaseEntry>();
 
@@ -85,13 +143,25 @@ namespace Squirrel
                 throw new Exception("Remote release File is empty or corrupted");
             }
 
-            var currentRelease = Utility.FindLatestFullVersion(localReleases, null);
-            var latestFullRelease = Utility.FindLatestFullVersion(remoteReleases, currentRelease.Rid);
+            var currentRelease = Utility.FindLatestFullVersion(localReleases, null); //TODO trialing back.
 
-            if (latestFullRelease == currentRelease) {
+            if(currentRelease == null) {
+                Console.WriteLine("stuff");
+            }
+
+            ReleaseEntry latestRemoteFullRelease;
+            
+            if(currentRelease != null) {
+               latestRemoteFullRelease = Utility.FindLatestFullVersion(remoteReleases, currentRelease.Rid);
+            }
+            else {
+                latestRemoteFullRelease = Utility.FindLatestFullVersion(remoteReleases, null);
+            }
+
+            if (latestRemoteFullRelease == currentRelease) {
                 this.Log().Info("No updates, remote and local are the same");
 
-                var info = UpdateInfo.Create(currentRelease, new[] { latestFullRelease }, packageDirectory);
+                var info = UpdateInfo.Create(currentRelease, new[] { latestRemoteFullRelease }, packageDirectory);
                 return info;
             }
 
@@ -106,12 +176,12 @@ namespace Squirrel
                     this.Log().Warn("No local releases found, starting from scratch");
                 }
 
-                return UpdateInfo.Create(null, new[] { latestFullRelease }, packageDirectory);
+                return UpdateInfo.Create(null, new[] { latestRemoteFullRelease }, packageDirectory);
             }
 
             if (localReleases.Max(x => x.Version) > remoteReleases.Max(x => x.Version)) {
                 this.Log().Warn("hwhat, local version is greater than remote version");
-                return UpdateInfo.Create(currentRelease, new[] { latestFullRelease }, packageDirectory);
+                return UpdateInfo.Create(currentRelease, new[] { latestRemoteFullRelease }, packageDirectory);
             }
 
             return UpdateInfo.Create(currentRelease, remoteReleases, packageDirectory);
@@ -119,6 +189,7 @@ namespace Squirrel
 
         internal Guid? getOrCreateStagedUserId()
         {
+            this.Log().Info("calling getOrCreateStagedUserId method");
             var stagedUserIdFile = _config.BetaIdFilePath;
             var ret = default(Guid);
 

@@ -36,6 +36,24 @@ namespace Squirrel
                 hasMinor = true;
             }
 
+            //TODO fail pack with more grace. Currently prints stack trace.
+            /*
+             csq : Unhandled exception. System.FormatException: Input string was not in a correct format.
+            At line:1 char:1
+            + csq pack -f null
+            + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                + CategoryInfo          : NotSpecified: (Unhandled excep...correct format.:String) [], RemoteException
+                + FullyQualifiedErrorId : NativeCommandError
+ 
+               at System.Number.ThrowOverflowOrFormatException(ParsingStatus status, TypeCode type)
+               at System.Version.TryParseComponent(ReadOnlySpan`1 component, String componentName, Boolean throwOnFailure, 
+            Int32& parsedComponent)
+               at System.Version.ParseVersion(ReadOnlySpan`1 input, Boolean throwOnFailure)
+               at System.Version.Parse(String input)
+               at Squirrel.RuntimeVersion..ctor(String versionString) in ./Squirrel/Lib/RID.cs:line 39
+               at Squirrel.RID.Parse(String runtimeIdentifier) in ./Squirrel/Lib/RID.cs:line 302
+               at Squirrel.CommandLine.SquirrelHost.Main(String[] args) in ./Squirrel.CommandLine/SquirrelHost.cs:line 51
+             */
             version = Version.Parse(toParse);
         }
 
