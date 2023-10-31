@@ -451,7 +451,7 @@ namespace Squirrel.Tests
             var entries = ReleaseEntry.ParseReleaseFile(_ridReleaseEntries);
 
             var e = Utility.FindLatestFullVersion(entries, RID.Parse("win-x86"));
-            Assert.Equal("MyApp-1.3-win.nupkg", e.Filename);
+            Assert.Equal("MyApp-1.3-win-x86.nupkg", e.Filename);
         }
 
         static string MockReleaseEntry(string name, float? percentage = null)
