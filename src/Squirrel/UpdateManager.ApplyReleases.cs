@@ -19,6 +19,7 @@ namespace Squirrel
         /// <inheritdoc cref="IUpdateManager.ApplyReleases"/> />
         protected async Task<string> ApplyReleases(UpdateInfo updateInfo, bool silentInstall, bool attemptingFullInstall, Action<int> progress = null)
         {
+            this.Log().Info("calling ApplyReleases method");
             await acquireUpdateLock().ConfigureAwait(false);
             progress = progress ?? (_ => { });
 
@@ -80,6 +81,7 @@ namespace Squirrel
         [SupportedOSPlatform("windows")]
         public async Task FullUninstall()
         {
+            this.Log().Info("calling FullUninstall method");
             var rootAppDirectory = _config.RootAppDir;
             await acquireUpdateLock().ConfigureAwait(false);
 
@@ -138,6 +140,7 @@ namespace Squirrel
 
         Task<string> installPackageToStagingDir(UpdateInfo updateInfo, ReleaseEntry release, Action<int> progressCallback)
         {
+            this.Log().Info("calling installPackageToStagingDir method");
             return Task.Run(async () => {
                 var target = new DirectoryInfo(_config.GetVersionStagingPath(release.Version));
 

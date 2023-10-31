@@ -89,14 +89,18 @@ namespace Squirrel
         [SupportedOSPlatform("windows")]
         public async Task FullInstall(bool silentInstall = false, Action<int> progress = null)
         {
+            this.Log().Info("Method FullInstall called");
             var updateInfo = await CheckForUpdate(intention: UpdaterIntention.Install).ConfigureAwait(false);
             await DownloadReleases(updateInfo.ReleasesToApply).ConfigureAwait(false);
             await ApplyReleases(updateInfo, silentInstall, true, progress).ConfigureAwait(false);
         }
 
+
+        //TODO this is causing a crash.
         /// <inheritdoc/>
         public async Task<ReleaseEntry> UpdateApp(Action<int> progress = null)
         {
+            this.Log().Info("Method UpdateApp called");
             progress = progress ?? (_ => { });
             this.Log().Info("Starting automatic update");
 
@@ -108,6 +112,8 @@ namespace Squirrel
             try {
                 var localVersions = _config.GetVersions();
                 var currentVersion = CurrentlyInstalledVersion();
+
+                //HERE LIES THY ISSUE.
 
                 // 0 -> 10%
                 updateInfo = await this.ErrorIfThrows(() => CheckForUpdate(ignoreDeltaUpdates, x => progress(Utility.CalculateProgress(x, 0, 10))),
